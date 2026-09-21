@@ -78,6 +78,7 @@ changelog-commit:
     entrypoint: [""]  # same entrypoint override — image entrypoint is git
   needs:
     - changelog
+  allow_failure: true  # best-effort — release notes don't depend on it
   rules:
     - if: $CI_COMMIT_TAG
   script:

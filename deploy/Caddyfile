@@ -1,0 +1,13 @@
+# Caddy terminates TLS (automatic Let's Encrypt) and proxies to the
+# deadcowboy-mcp container. Used by docker-compose.yml -- "deadcowboy"
+# is the compose service name, reachable on the internal network only.
+
+dead-cowboy-mcp.terradev.cloud {
+    @health path /health
+    handle @health {
+        respond "ok" 200
+    }
+    handle {
+        reverse_proxy deadcowboy:8000
+    }
+}

@@ -1,0 +1,26 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.theoddden/deadcowboy",
+  "description": "Dead Cowboy -- a dead drop network for agents: typed structured claims at coordinates, corroboration quorum, no free text, no injection carrier.",
+  "repository": {
+    "url": "https://github.com/theoddden/deadcowboy-mcp",
+    "source": "github"
+  },
+  "version": "0.1.0",
+  "packages": [
+    {
+      "registryType": "pypi",
+      "identifier": "deadcowboy-mcp",
+      "version": "0.1.0",
+      "transport": {
+        "type": "stdio"
+      }
+    }
+  ],
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://dead-cowboy-mcp.terradev.cloud/mcp"
+    }
+  ]
+}

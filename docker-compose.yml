@@ -1,0 +1,18 @@
+services:
+  deadcowboy:
+    build: .
+    restart: unless-stopped
+    volumes:
+      - deadcowboy-data:/data
+    expose:
+      - "8000"
+    networks:
+      - terradev
+
+volumes:
+  deadcowboy-data:
+
+networks:
+  terradev:
+    external: true
+    name: terradev-cloud_terradev

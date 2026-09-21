@@ -1,0 +1,95 @@
+# Dead Cowboy CI — test matrix, lint, docker build, automated changelog.
+# Tag a release (git tag vX.Y.Z && git push --tags) and the changelog +
+# GitLab release are generated automatically from conventional commits.
+
+stages:
+  - test
+  - build
+  - changelog
+  - release
+
+# ---------------------------------------------------------------------------
+# test — the full suite on every supported Python version
+# ---------------------------------------------------------------------------
+
+test:
+  stage: test
+  image: python:$PYTHON_VERSION
+  parallel:
+    matrix:
+      - PYTHON_VERSION: ["3.10", "3.11", "3.12"]
+  before_script:
+    - pip install -q -e .
+  script:
+    - python tests/test_deadcowboy.py
+
+lint:
+  stage: test
+  image: python:3.12
+  before_script:
+    - pip install -q flake8
+  script:
+    # fatal classes only: syntax errors, undefined names, bad imports —
+    # no style policing
+    - flake8 deadcowboy_mcp tests --select=E9,F63,F7,F82 --show-source
+
+# ---------------------------------------------------------------------------
+# build — prove the Dockerfile still builds (main + tags)
+# ---------------------------------------------------------------------------
+
+docker-build:
+  stage: build
+  image: docker:latest
+  services:
+    - docker:dind
+  rules:
+    - if: $CI_COMMIT_TAG
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  script:
+    - docker build -t deadcowboy-mcp:$CI_COMMIT_SHORT_SHA .
+
+# ---------------------------------------------------------------------------
+# changelog — git-cliff renders CHANGELOG.md from conventional commits.
+# Runs on tags; commits the changelog back to the default branch and
+# feeds it to the release job as release notes.
+# ---------------------------------------------------------------------------
+
+changelog:
+  stage: changelog
+  image: orhunp/git-cliff:latest
+  rules:
+    - if: $CI_COMMIT_TAG
+  script:
+    - git-cliff --tag "$CI_COMMIT_TAG" --output CHANGELOG.md
+    - git config user.email "ci@${CI_SERVER_HOST}"
+    - git config user.name "gitlab-ci"
+    - git remote set-url origin
+        "https://oauth2:${CHANGELOG_TOKEN:-$CI_JOB_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git"
+    - git fetch origin "$CI_DEFAULT_BRANCH" --depth=50
+    - git checkout -B changelog FETCH_HEAD
+    - git add CHANGELOG.md
+    - git commit -m "docs: changelog for $CI_COMMIT_TAG [skip ci]"
+    - git push origin "HEAD:${CI_DEFAULT_BRANCH}" ||
+        echo "commit-back skipped: set CHANGELOG_TOKEN (project access token, write_repository)"
+  artifacts:
+    paths:
+      - CHANGELOG.md
+    expire_in: 1 year
+
+# ---------------------------------------------------------------------------
+# release — GitLab release with the generated changelog as notes
+# ---------------------------------------------------------------------------
+
+release:
+  stage: release
+  image: registry.gitlab.com/gitlab-org/release-cli:latest
+  needs:
+    - changelog
+  rules:
+    - if: $CI_COMMIT_TAG
+  script:
+    - echo "Releasing $CI_COMMIT_TAG"
+  release:
+    tag_name: $CI_COMMIT_TAG
+    name: "deadcowboy-mcp $CI_COMMIT_TAG"
+    description: CHANGELOG.md

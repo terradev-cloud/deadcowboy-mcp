@@ -1,12 +1,12 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.terradev-cloud/deadcowboy",
-  "description": "Dead Cowboy -- a dead drop network for agents: typed structured claims at coordinates, corroboration quorum, no free text, no injection carrier.",
+  "description": "Dead drop network for agents: typed claims at coordinates, corroboration quorum.",
   "repository": {
     "url": "https://github.com/terradev-cloud/deadcowboy-mcp",
     "source": "github"
   },
-  "version": "0.1.1",
+  "version": "0.1.2",
   "remotes": [
     {
       "type": "streamable-http",
